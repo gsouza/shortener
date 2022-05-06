@@ -9,5 +9,5 @@
 
 ## About Project 
 
-# This project is a poc version of link shoteners.
+# This project is a poc version of link Shorteners.
 
