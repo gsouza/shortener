@@ -9,5 +9,8 @@
 
 ## About Project 
 
-# This project is a poc version of link Shorteners.
+## This project is a poc version of link Shorteners.
+* It uses white-dashboard as user interface
 
+## Result
+![image](https://user-images.githubusercontent.com/2785990/167216345-a86305a3-795a-4f86-a714-91678232eb2c.png)
