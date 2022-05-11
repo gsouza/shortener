@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 use App\Common\Utils;
-use Goutte\Client;
-use Symfony\Component\HttpClient\HttpClient;
+use App\Jobs\CrawlerJob;
 
 class Shortener extends Model
 {
@@ -22,20 +21,20 @@ class Shortener extends Model
     $exists = self::checkIfExists($params->link);
 
     if ($exists != null ) {      
+      $item->access++;
       $item->id = $exists->id;
       $item->exists = $ret = true;
-      $item->access++;
       $retLink = $exists->unique_id;
     } 
     else {
       $item = new Shortener;
-      $item->unique_id = md5(uniqid(rand(), true));
-      $item->title = self::getUrlTitle($params->link);
-      $item->original_link = $params->link;
       $item->access = 1;
+      $item->original_link = $params->link;
+      $item->unique_id = md5(uniqid(rand(), true));
       $ret = $item->save();
-
       $retLink = $item->unique_id;
+
+      dispatch(new CrawlerJob(['uid' => $item->unique_id, 'url' => $params->link, 'class'=>'\App\Models\Shortener', 'func' =>'updateUrlTitle']));
     }
 
     $arg = [
@@ -83,6 +82,23 @@ class Shortener extends Model
     return null;
   }
 
+  public static function updateUrlTitle($params) {
+  
+    $params = Utils::getObject($params);
+    $title = $params->title;
+    $uid = $params->uid;
+
+    if (!$short = Shortener::where('unique_id','=',$uid)->get()->first()) 
+      return 
+    logger('short:'. $short->toArray());
+
+    $short->title = $title;
+    $short->exists = 1;
+    $ret = $short->save();
+
+    return $ret;
+  }
+  
   /**PRIVATE METHODS */
   private static function checkIfExists($link) {
 
@@ -93,18 +109,5 @@ class Shortener extends Model
     return $link == null? $link : Utils::getObject($link);
   }
 
-
-  private static function getUrlTitle($url) {
-   
-    $client = new Client(HttpClient::create(['timeout' => 60]));
-
-    //event dispatch :: not working for now
-    $crawler = $client->request('GET', $url);
-    $webTitle = $crawler->filter('title')->each(function ($node) {
-      return $node->text();
-    });
-
-    return $webTitle?$webTitle[0]:'';
-  }
 
 }
