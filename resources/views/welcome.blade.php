@@ -1,4 +1,4 @@
-@extends('layouts.app', ['page' => __('Shortenert'), 'pageSlug' => 'Shortenert'])
+@extends('layouts.app', ['page' => env('APP_NAME'), 'pageSlug' => env('APP_NAME')])
 
 
 @section('content')
@@ -40,12 +40,12 @@
     <div class="card">
       
       <div class="card-header">
-        <label>Click to show Most accessed Links Stored</label>
+        <label>Click to show most accessed links stored</label>
       </div>
       
       <div class="card-body">
       
-        <button class="btn btn-primary btn-block" onclick='_getMostLinks();'>SHOW Links</button>
+        <button class="btn btn-primary btn-block" onclick='_getMostLinks();'>Show Me</button>
         <ul id='mostLinkAnchor'> </ul>
 
       </div> 
@@ -58,12 +58,12 @@
     <div class="card">
       
       <div class="card-header">
-        <label> Go To Link Shorten</label>
+        <label> Go to link shorten</label>
       </div>
       
       <div class="card-body">
         <input type="text" id='uidField' name="uid" class="form-control" placeholder="{{ ('uid') }}">
-        <button class="btn btn-primary btn-block" onclick='_getLinkShortenByUid();'>Go web</button>
+        <button class="btn btn-primary btn-block" onclick='_getLinkShortenByUid();'>Go o/</button>
       </div> 
 
     </div>
@@ -76,7 +76,6 @@
   
   async function _getLink() {
     let link = $("#inputLink").val();
-    console.log(link)
 
     if (!link) {
       return false;
@@ -87,11 +86,14 @@
       if (!result || !result.success || !result.data.link)
         console.error('error');
 
+      $("#linkShortened").empty();
+
       let anchor = document.getElementById("linkShortened");
       let a = document.createElement('a');
       var linkText = document.createTextNode(`Here is your Link`);
       a.appendChild(linkText);
-      a.title = "Here is your shortten link :: localhost://${result.data.link}"
+      a.target = "_blanck";
+      a.title = "Here is your shortten link :: localhost://${result.data.link}";
       a.href = result.data.link;
 
       anchor.appendChild(a);
@@ -107,7 +109,7 @@
 
     await get(`{{ url('shortener/${uid}') }}`, null, (result) => {
 
-      if (!result.data.linkOfUid)
+      if (!result.data || !result.data['linkOfUid'])
         return console.error('error');
 
       window.open(result.data.linkOfUid, '_blank');
@@ -121,21 +123,19 @@
       if (!result || !result.data)
         return console.error('error');
 
-
       let data = result.data;
-      let ul = document.getElementById('mostLinkAnchor');
-{{-- console.log(result) --}}
 
+       $("#mostLinkAnchor").empty();
+      let ul = document.getElementById('mostLinkAnchor');
+
+      let index = 0;
       for (let [id, val] of Object.entries(data.links)) {
         console.log(id, val)
         let li = document.createElement('li');
-        li.innerHTML = `${id+1} : ${val}`
+        li.innerHTML = `${++index} : ${val}`
 
         ul.appendChild(li);
-
       }
-
-      
     });
   }
 
